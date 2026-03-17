@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API登录测试工具 - CursedIsle</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 500px;
+            overflow: hidden;
+        }
+        
+        .header {
+            background: #1a1a2e;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            opacity: 0.8;
+            font-size: 14px;
+        }
+        
+        .form-container {
+            padding: 40px 30px;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e1e1;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+        
+        .btn:hover {
+            background: #5568d3;
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+        }
+        
+        .result.success {
+            display: block;
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        
+        .result.error {
+            display: block;
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        
+        .result.loading {
+            display: block;
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+        
+        .result-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .result-content {
+            font-family: "Courier New", monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            background: rgba(0,0,0,0.05);
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        
+        .tips {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        .tips strong {
+            color: #333;
+        }
+        
+        .request-details {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f4f4f4;
+            border-radius: 8px;
+            font-size: 12px;
+            display: none;
+        }
+        
+        .request-details.show {
+            display: block;
+        }
+        
+        .toggle-details {
+            color: #667eea;
+            cursor: pointer;
+            text-decoration: underline;
+            font-size: 13px;
+            margin-top: 10px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 API登录测试</h1>
+            <p>目标: thecursedisle.com/api/v1/users/login_by_password</p>
+        </div>
+        
+        <div class="form-container">
+            <div class="input-group">
+                <label for="username">账号 (Username)</label>
+                <input type="text" id="username" placeholder="输入测试账号" autocomplete="off">
+            </div>
+            
+            <div class="input-group">
+                <label for="password">密码 (Password)</label>
+                <input type="password" id="password" placeholder="输入测试密码">
+            </div>
+            
+            <button class="btn" id="submitBtn" onclick="testLogin()">
+                发送登录请求
+            </button>
+            
+            <div id="result" class="result">
+                <div class="result-title" id="resultTitle"></div>
+                <div id="resultMessage"></div>
+                <div class="result-content" id="resultContent"></div>
+                <span class="toggle-details" onclick="toggleDetails()">显示请求详情</span>
+            </div>
+            
+            <div id="requestDetails" class="request-details"></div>
+            
+            <div class="tips">
+                <strong>⚠️ 注意事项：</strong><br>
+                1. <strong>CORS限制</strong>：浏览器可能拦截跨域请求，建议配合浏览器CORS插件使用<br>
+                2. <strong>靶场环境</strong>：请确保这是你的测试环境，避免对生产系统测试<br>
+                3. <strong>推荐使用</strong>：Postman 或 curl 命令避免浏览器限制<br>
+                4. <strong>请求格式</strong>：Content-Type: application/json
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API配置（从抓包获取）
+        const API_CONFIG = {
+            url: 'https://thecursedisle.com/api/v1/users/login_by_password',
+            method: 'POST',
+            headers: {
+                'Host': 'thecursedisle.com',
+                'Accept': '*/*',
+                'Accept-Encoding': 'deflate, gzip',
+                'Content-Type': 'application/json',
+                'User-Agent': 'CursedIsle/++UE4+Release-4.27-CL-0 Android/16'
+            }
+        };
+
+        async function testLogin() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const btn = document.getElementById('submitBtn');
+            const result = document.getElementById('result');
+            
+            // 验证输入
+            if (!username || !password) {
+                showResult('error', '输入错误', '请输入账号和密码');
+                return;
+            }
+            
+            // 构造请求体
+            const requestBody = {
+                username: username,
+                password: password
+                // 注意：实际可能还需要 device_id, platform 等字段，根据抓包Text标签内容补充
+            };
+            
+            // 显示加载状态
+            btn.disabled = true;
+            btn.textContent = '请求中...';
+            showResult('loading', '正在请求', '正在发送登录请求到服务器...');
+            
+            const startTime = Date.now();
+            
+            try {
+                const response = await fetch(API_CONFIG.url, {
+                    method: API_CONFIG.method,
+                    headers: API_CONFIG.headers,
+                    body: JSON.stringify(requestBody),
+                    // 关键：包含凭证（如果API需要Cookie）
+                    credentials: 'include'
+                });
+                
+                const endTime = Date.now();
+                const duration = endTime - startTime;
+                
+                // 获取响应文本
+                const responseText = await response.text();
+                
+                // 显示请求详情
+                showRequestDetails(requestBody, response, responseText, duration);
+                
+                // 判断结果
+                if (response.ok) {
+                    // HTTP 200
+                    showResult('success', '✅ 请求成功', 
+                        `状态码: ${response.status} ${response.statusText}\n` +
+                        `耗时: ${duration}ms\n\n` +
+                        `服务器响应:\n${formatJson(responseText)}`
+                    );
+                } else {
+                    // HTTP 错误 (401, 403, 404, 500等)
+                    showResult('error', '❌ 请求失败', 
+                        `状态码: ${response.status} ${response.statusText}\n` +
+                        `耗时: ${duration}ms\n\n` +
+                        `错误响应:\n${formatJson(responseText)}`
+                    );
+                }
+                
+            } catch (error) {
+                // 网络错误或CORS拦截
+                showResult('error', '❌ 请求异常', 
+                    `错误类型: ${error.name}\n` +
+                    `错误信息: ${error.message}\n\n` +
+                    `💡 提示：这通常是由于浏览器的CORS跨域限制导致的。\n` +
+                    `解决方案：\n` +
+                    `1. 安装浏览器CORS插件（如 Allow CORS）\n` +
+                    `2. 使用Postman测试\n` +
+                    `3. 使用代理服务器转发请求`
+                );
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '发送登录请求';
+            }
+        }
+        
+        function showResult(type, title, message) {
+            const result = document.getElementById('result');
+            const resultTitle = document.getElementById('resultTitle');
+            const resultMessage = document.getElementById('resultMessage');
+            
+            result.className = 'result ' + type;
+            resultTitle.textContent = title;
+            resultMessage.textContent = message;
+        }
+        
+        function showRequestDetails(requestBody, response, responseText, duration) {
+            const details = document.getElementById('requestDetails');
+            
+            const detailText = `
+【请求信息】
+URL: ${API_CONFIG.url}
+Method: ${API_CONFIG.method}
+Duration: ${duration}ms
+
+【请求头】
+${JSON.stringify(API_CONFIG.headers, null, 2)}
+
+【请求体】
+${JSON.stringify(requestBody, null, 2)}
+
+【响应信息】
+Status: ${response.status} ${response.statusText}
+Headers: ${JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2)}
+
+【响应体】
+${responseText}
+            `;
+            
+            details.textContent = detailText;
+        }
+        
+        function toggleDetails() {
+            const details = document.getElementById('requestDetails');
+            details.classList.toggle('show');
+        }
+        
+        function formatJson(text) {
+            try {
+                return JSON.stringify(JSON.parse(text), null, 2);
+            } catch(e) {
+                return text;
+            }
+        }
+        
+        // 回车键提交
+        document.getElementById('password').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                testLogin();
+            }
+        });
+    </script>
+</body>
+</html>
